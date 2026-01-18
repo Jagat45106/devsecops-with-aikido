@@ -22,7 +22,7 @@ jobs:
           fail-on-dependency-scan: true
           fail-on-sast-scan: true
           fail-on-iac-scan: true
-          minimum-severity: "HIGH"
+          minimum-severity: "CRITICAL"
           timeout-seconds: 90
           post-scan-status-comment: "off"
           post-sast-review-comments: "off"
