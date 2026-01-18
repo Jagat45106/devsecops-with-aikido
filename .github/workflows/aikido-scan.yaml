@@ -1,26 +1,26 @@
-name: Aikido Scan
-
+name: Aikido Security
 on:
-    push:
-        branches:
-            - master
-    pull_request:
-        branches:
-            - master
+  pull_request:
+    branches:
+      - '*'
+
 jobs:
-    aikido-local-scan-repo:
-        runs-on: ubuntu-latest
-        container:
-            image: aikidosecurity/local-scanner:latest
-        steps:
-            - uses: actions/checkout@v4
-              with:
-                  token: ${{ secrets.GITHUB_TOKEN }}
-                  path: my-repo
-            - name: Run aikido scan
-              shell: bash
-              env:
-                AIKIDO_API_KEY: ${{ secrets.AIKIDO_SECRET }}
-                REPO_NAME: ${{ github.event.repository.name }}
-                BRANCH_NAME: ${{ github.ref_name }}
-              run: aikido-local-scanner scan . --apikey "$AIKIDO_API_KEY" --repositoryname "$REPO_NAME" --branchname "$BRANCH_NAME"
+  aikido-security:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Detect new vulnerabilities
+        uses: AikidoSec/github-actions-workflow@v1.0.13
+        with:
+            secret-key: ${{ secrets.AIKIDO_SECRET }}
+            fail-on-timeout: true
+            fail-on-dependency-scan: true
+            fail-on-sast-scan: false
+            fail-on-iac-scan: false
+            minimum-severity: 'CRITICAL'
+            timeout-seconds: 90
+            post-scan-status-comment: 'off'
+            post-sast-review-comments: 'off'
+            github-token: ${{ secrets.GITHUB_TOKEN }}
