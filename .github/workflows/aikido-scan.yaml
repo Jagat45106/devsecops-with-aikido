@@ -1,0 +1,26 @@
+name: Aikido Scan
+
+on:
+    push:
+        branches:
+            - main
+    pull_request:
+        branches:
+            - main
+jobs:
+    aikido-local-scan-repo:
+        runs-on: ubuntu-latest
+        container:
+            image: aikidosecurity/local-scanner:latest
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  token: ${{ secrets.GITHUB_TOKEN }}
+                  path: my-repo
+            - name: Run aikido scan
+              shell: bash
+              env:
+                AIKIDO_API_KEY: ${{ secrets.AIKIDO_SECRET }}
+                REPO_NAME: ${{ github.event.repository.name }}
+                BRANCH_NAME: ${{ github.ref_name }}
+              run: aikido-local-scanner scan . --apikey "$AIKIDO_API_KEY" --repositoryname "$REPO_NAME" --branchname "$BRANCH_NAME"
